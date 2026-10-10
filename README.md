@@ -1,4 +1,4 @@
-# Haunt-Game # Haunt: app project
+# Haunt: app project
 
 This folder holds the game (in `www/index.html`) and a Capacitor config that wraps it as an iOS and Android app.
 
