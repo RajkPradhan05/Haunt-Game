@@ -87,10 +87,11 @@
       box-shadow: 0 16px 38px rgba(0,0,0,0.35);
     }
     .panel h1 {
-      margin: 0 0 12px;
-      font-size: clamp(34px, 9vw, 52px);
+      margin: 0 0 8px;
+      font-size: clamp(38px, 10vw, 62px);
       letter-spacing: -0.06em;
       color: #f1f6ff;
+      text-transform: uppercase;
     }
     .panel p {
       margin: 0;
@@ -113,6 +114,23 @@
     .panel button:active {
       transform: scale(0.98);
     }
+    .level-badge {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: rgba(120, 170, 255, 0.15);
+      border: 1px solid rgba(120, 170, 255, 0.35);
+      color: #bcd7ff;
+      margin-bottom: 14px;
+    }
+    .easy { background: rgba(80, 215, 170, 0.12); border-color: rgba(80, 215, 170, 0.4); color: #99f0d1; }
+    .medium { background: rgba(255, 180, 82, 0.12); border-color: rgba(255, 180, 82, 0.4); color: #ffdca3; }
+    .hard { background: rgba(255, 95, 113, 0.12); border-color: rgba(255, 95, 113, 0.4); color: #ffb4be; }
+    .winner { background: rgba(154, 129, 255, 0.12); border-color: rgba(154, 129, 255, 0.35); color: #d7ccff; }
   </style>
 </head>
 <body>
@@ -127,6 +145,7 @@
 
     <div id="overlay">
       <div class="panel">
+        <div id="levelBadge" class="level-badge easy">Level 1 • Easy</div>
         <h1 id="panelTitle">Haunt</h1>
         <p id="panelText">Drag your finger to move the ball. Dodge obstacles and collect glowing orbs.</p>
         <button id="actionBtn">Start Game</button>
@@ -144,15 +163,16 @@
     const scoreText = document.getElementById('scoreText');
     const livesText = document.getElementById('livesText');
     const levelText = document.getElementById('levelText');
+    const levelBadge = document.getElementById('levelBadge');
 
     const W = canvas.width;
     const H = canvas.height;
     let best = Number(localStorage.getItem('haunt-best') || 0);
 
     const LEVELS = [
-      { id: 1, name: 'Level 1', difficulty: 'Easy', target: 120, spawn: 1.3, speed: 2.7, obstacleScale: 1.0 },
-      { id: 2, name: 'Level 2', difficulty: 'Medium', target: 260, spawn: 1.0, speed: 3.3, obstacleScale: 1.3 },
-      { id: 3, name: 'Level 3', difficulty: 'Hard', target: 420, spawn: 0.75, speed: 4.1, obstacleScale: 1.6 }
+      { id: 1, name: 'Level 1', difficulty: 'Easy', badgeClass: 'easy', target: 120, spawn: 1.3, speed: 2.7, obstacleScale: 1.0 },
+      { id: 2, name: 'Level 2', difficulty: 'Medium', badgeClass: 'medium', target: 260, spawn: 1.0, speed: 3.3, obstacleScale: 1.3 },
+      { id: 3, name: 'Level 3', difficulty: 'Hard', badgeClass: 'hard', target: 420, spawn: 0.75, speed: 4.1, obstacleScale: 1.6 }
     ];
 
     let currentLevelIndex = 0;
@@ -180,6 +200,11 @@
       levelText.textContent = String(currentLevelIndex + 1);
     }
 
+    function setLevelBadge(level) {
+      levelBadge.textContent = `${level.name} • ${level.difficulty}`;
+      levelBadge.className = `level-badge ${level.badgeClass}`;
+    }
+
     function resetGameState() {
       score = 0;
       lives = 3;
@@ -200,8 +225,9 @@
       const level = LEVELS[currentLevelIndex];
       state = 'intro';
       overlay.classList.remove('hidden');
-      panelTitle.textContent = `${level.name}: ${level.difficulty}`;
-      panelText.textContent = `Target score: ${level.target}. Ready?`;
+      setLevelBadge(level);
+      panelTitle.textContent = `${level.name}`;
+      panelText.textContent = `${level.difficulty} difficulty. Target score: ${level.target}.`;
       actionBtn.textContent = 'Continue';
       actionBtn.onclick = () => {
         state = 'playing';
@@ -215,8 +241,9 @@
         state = 'intro';
         const level = LEVELS[currentLevelIndex];
         overlay.classList.remove('hidden');
-        panelTitle.textContent = `${level.name}: ${level.difficulty}`;
-        panelText.textContent = `Target score: ${level.target}. Stay sharp.`;
+        setLevelBadge(level);
+        panelTitle.textContent = `${level.name}`;
+        panelText.textContent = `${level.difficulty} difficulty. Stay sharp.`;
         actionBtn.textContent = 'Start Level';
         actionBtn.onclick = () => {
           state = 'playing';
@@ -230,8 +257,6 @@
 
     function startGame() {
       resetGameState();
-      state = 'playing';
-      overlay.classList.add('hidden');
       showLevelIntro();
       setHud();
     }
@@ -245,9 +270,13 @@
 
       overlay.classList.remove('hidden');
       if (won) {
+        levelBadge.textContent = 'Victory';
+        levelBadge.className = 'level-badge winner';
         panelTitle.textContent = 'You Win';
         panelText.textContent = `Final score: ${Math.floor(score)}\nBest score: ${best}`;
       } else {
+        levelBadge.textContent = 'Try Again';
+        levelBadge.className = 'level-badge hard';
         panelTitle.textContent = 'Game Over';
         panelText.textContent = `Final score: ${Math.floor(score)}\nBest score: ${best}`;
       }
@@ -465,6 +494,7 @@
     actionBtn.onclick = () => startGame();
     resetGameState();
     setHud();
+    setLevelBadge(LEVELS[0]);
     requestAnimationFrame(tick);
   </script>
 </body>
