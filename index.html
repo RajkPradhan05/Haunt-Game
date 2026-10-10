@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Haunt</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#e9e6f2;--board:#f7f5fc;--fg:#1d1a2b;--haz:#e8465a;--me:#1f6bff;--gh:#7b4dff;--line:#d6d1e6;--btn:#1d1a2b;--btnfg:#f7f5fc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07060d;--board:#0f0d1a;--fg:#ece9ff;--haz:#ff5468;--me:#5aa2ff;--gh:#a98bff;--line:#241f3b;--btn:#ece9ff;--btnfg:#0f0d1a}}
+:root[data-theme="dark"]{--bg:#07060d;--board:#0f0d1a;--fg:#ece9ff;--haz:#ff5468;--me:#5aa2ff;--gh:#a98bff;--line:#241f3b;--btn:#ece9ff;--btnfg:#0f0d1a}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-user-select:none;user-select:none;overflow:hidden}
+body{display:flex;align-items:center;justify-content:center}
+#wrap{position:relative;width:min(100%,calc(100vh * .5625));aspect-ratio:9/16;max-height:100%;background:var(--board);touch-action:none;overflow:hidden}
+canvas{width:100%;height:100%;display:block}
+#ov,#cv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;background:color-mix(in srgb,var(--board) 82%,transparent)}
+#ov.hide,#cv.hide{display:none}
+h2{font-size:36px;margin:0 0 10px;letter-spacing:-.03em;line-height:1.05}
+button:disabled{opacity:.6;cursor:default}
+#adv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;background:#0b0b10;color:#fff}
+#adv.hide{display:none}
+.foot{margin-top:22px;font-size:12px;opacity:.6;max-width:none}
+.lnk{background:none;color:inherit;font-size:12px;font-weight:400;padding:0;margin:0;text-decoration:underline;border-radius:0}
+#tm{position:absolute;inset:0;overflow:auto;padding:28px 24px;background:var(--board);text-align:left}
+#tm.hide{display:none}
+#tm h2{font-size:28px}
+#tm p{max-width:none;font-size:14px;line-height:1.55}
+.agree{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:6px;text-align:left}
+.agree[hidden]{display:none}
+.agree input{width:22px;height:22px;accent-color:var(--me);margin:0}
+.agree .lnk{font-size:inherit}
+#adT{position:absolute;top:16px;left:18px;font-size:14px;opacity:.8}
+#adBarW{width:80%;height:6px;background:#2b2b36;border-radius:3px;overflow:hidden;margin-top:26px}
+#adBar{height:100%;width:0;background:#ffd43b}
+#skip{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));margin:0;padding:11px 18px;font-size:15px;background:#fff;color:#111}
+h1{font-size:clamp(44px,15vw,72px);margin:0 0 8px;letter-spacing:-.04em;line-height:1}
+p{margin:0 0 10px;max-width:26ch;line-height:1.4;font-size:17px}
+.big{font-size:40px;font-weight:700;margin:0}
+button{margin-top:18px;font:inherit;font-weight:700;font-size:19px;padding:15px 34px;border:0;border-radius:14px;background:var(--btn);color:var(--btnfg);cursor:pointer}
+button:focus-visible{outline:3px solid var(--me);outline-offset:3px}
+.sm{font-size:14px;opacity:.7}
+#clr,#no{background:none;color:var(--fg);font-size:14px;font-weight:500;opacity:.6;margin-top:6px;padding:8px}
+</style></head>
+<body>
+<div id="wrap">
+<canvas id="c"></canvas>
+<div id="ov">
+<h1 id="t">Haunt</h1>
+<p id="m">Drag to dodge the blocks. You have 3 lives. Survive 10 minutes to become a Conqueror. Every run leaves a ghost of your path, and ghosts are solid.</p>
+<p class="sm" id="b"></p>
+<label class="agree" id="agree"><input type="checkbox" id="ag"><span>I agree to the <button class="lnk" id="tmB2" type="button">Terms</button></span></label>
+<button id="go">Play</button>
+<button id="clr" hidden>Clear ghosts</button>
+<p class="foot">&copy; 2026 <span class="own"></span>. All rights reserved. <button id="tmB" class="lnk">Terms</button></p>
+</div>
+<div id="cv" class="hide">
+<h2>Out of lives</h2>
+<p>Watch a short ad to get 1 more life and keep this run going. One continue per run. You can skip the ad after 25 seconds.</p>
+<button id="ad">Watch ad for +1 life</button>
+<button id="no">No thanks</button>
+</div>
+<div id="adv" class="hide">
+<span id="adT">Ad 30s</span>
+<h2>Your ad plays here</h2>
+<p class="sm">Placeholder ad. A real ad network replaces this screen in the app.</p>
+<div id="adBarW"><div id="adBar"></div></div>
+<button id="skip" disabled>Skip in 25s</button>
+</div>
+<div id="tm" class="hide">
+<h2>Terms of use</h2>
+<p>Haunt is &copy; 2026 <span class="own"></span>. All rights reserved. The game's code, design, name, artwork and sounds belong to its owner.</p>
+<p>You may play Haunt for your own personal use. You may not copy, modify, resell or redistribute the game, reverse engineer or extract its code, or use its name or branding without written permission.</p>
+<p>Data: this version saves only your best time on your own device. It does not collect personal information.</p>
+<p>The game is provided as is, without warranties. To the extent the law allows, the owner is not liable for losses from using it.</p>
+<p>Contact: <span class="ct"></span></p>
+<button id="tmX">Close</button>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'),adB=document.getElementById('ad'),noB=document.getElementById('no');
+const C=document.getElementById('c'),g=C.getContext('2d'),wrap=document.getElementById('wrap');
+const W=360,H=640,PY=565,R=11,MAXG=8,GRACE=50;
+if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath()};
+const dpr=Math.min(window.devicePixelRatio||1,2);C.width=W*dpr;C.height=H*dpr;g.scale(dpr,dpr);
+const ov=document.getElementById('ov'),T=document.getElementById('t'),M=document.getElementById('m'),B=document.getElementById('b'),GO=document.getElementById('go'),CL=document.getElementById('clr');
+const mem={};
+const store={
+ set(k,v){mem[k]=v;try{localStorage.setItem(k,v)}catch(e){}try{document.cookie=k+'='+encodeURIComponent(v)+';max-age=31536000;path=/;SameSite=Lax'}catch(e){}
+  try{const r=indexedDB.open('haunt',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{try{r.result.transaction('kv','readwrite').objectStore('kv').put(v,k)}catch(e){}}}catch(e){}},
+ getSync(k){if(mem[k]!=null)return mem[k];try{const v=localStorage.getItem(k);if(v!=null)return v}catch(e){}
+  try{const m=document.cookie.match(new RegExp('(?:^|; )'+k+'=([^;]*)'));if(m)return decodeURIComponent(m[1])}catch(e){}return null},
+ getAsync(k){return new Promise(res=>{try{const r=indexedDB.open('haunt',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{try{const q=r.result.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result==null?null:q.result);q.onerror=()=>res(null)}catch(e){res(null)}};r.onerror=()=>res(null)}catch(e){res(null)}})}
+};
+let best=parseFloat(store.getSync('haunt-best'))||0;
+store.getAsync('haunt-best').then(v=>{v=parseFloat(v);if(v>best){best=v;if(state==='menu')B.textContent='Best '+fmt(best)+', '+RANKS[rk(best)][1]}});
+let ghosts=[],hz=[],rec=[],f=0,px=W/2,tx=W/2,spawnT=0,rng,state='menu',shake=0,lives=3,inv=0,lastRank=0,banner=0,used=false;
+const col=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function mul(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const RANKS=[[0,'Rookie','#8d8aa3'],[60,'Wisp','#3fcfa5'],[120,'Dodger','#4a90ff'],[180,'Phantom','#a47bff'],[300,'Ace','#ff9f1a'],[420,'Master','#ff5d9a'],[600,'Conqueror','#ffd43b']];
+const rk=s=>{let r=0;RANKS.forEach((x,i)=>{if(s>=x[0])r=i});return r};
+const fmt=s=>s>=60?Math.floor(s/60)+'m '+String(Math.floor(s%60)).padStart(2,'0')+'s':s.toFixed(1)+'s';
+function start(){f=0;lives=3;inv=0;lastRank=0;banner=0;used=false;px=tx=W/2;hz=[];rec=[];rng=mul((Math.random()*1e9)|0);spawnT=20;state='play';ov.classList.add('hide')}
+function die(){
+ ghosts.push(rec);if(ghosts.length>MAXG)ghosts.shift();
+ const s=f/60;let nb=s>best;if(nb){best=s;store.set('haunt-best',String(s));}
+ state='over';shake=12;try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}
+ T.className='big';T.textContent=fmt(s);
+ M.textContent='Rank: '+RANKS[rk(s)][1]+'. '+ghosts.length+(ghosts.length==1?' ghost now replays':' ghosts now replay')+' your moves.';
+ B.textContent=(nb?'New best! ':'Best '+fmt(best)+', ')+RANKS[rk(best)][1];
+ GO.textContent='Haunt again';CL.hidden=false;
+ setTimeout(()=>ov.classList.remove('hide'),450);
+}
+function hit(){
+ lives--;if(lives<=0){if(used){die()}else{state='cont';shake=10;cv.classList.remove('hide')}return}
+ inv=100;shake=10;try{navigator.vibrate&&navigator.vibrate(40)}catch(e){}
+ hz=hz.filter(h=>h.y<PY-170||h.y>PY+30);
+}
+function step(){
+ f++;if(inv>0)inv--;if(banner>0)banner--;{const r=rk(f/60);if(r>lastRank){lastRank=r;banner=160;try{navigator.vibrate&&navigator.vibrate([30,40,30])}catch(e){}}}const t=f/60,sp=Math.min(3.2+t*.12,8.5),iv=Math.max(13,34-t*.5);
+ px+=(tx-px)*.35;px=Math.max(R,Math.min(W-R,px));rec.push(px);
+ if(--spawnT<=0){
+  const k=t<4?0:rng();
+  if(k<.4){let w=44+rng()*70;hz.push({x:rng()*(W-w),w,y:-20,h:18});
+   if(rng()<Math.min(.55,t/60)){w=40+rng()*60;hz.push({x:rng()*(W-w),w,y:-20,h:18})}
+   spawnT=iv*(.7+rng()*.6)}
+  else if(k<.65){const gw=Math.max(70,115-t),gx=rng()*(W-gw);
+   hz.push({x:0,w:gx,y:-20,h:18},{x:gx+gw,w:W-gx-gw,y:-20,h:18});spawnT=iv*1.3}
+  else if(k<.85){const d=rng()<.5?1:-1,s=d>0?10:W-70;
+   for(let i=0;i<5;i++)hz.push({x:s+d*i*55,w:60,y:-20-i*38,h:18});spawnT=iv*1.8}
+  else{for(let i=0;i<3;i++){const w=30+rng()*30;hz.push({x:rng()*(W-w),w,y:-20-i*45,h:18})}spawnT=iv*1.2}
+ }
+ for(const h of hz){h.y+=sp;
+  const cx=Math.max(h.x,Math.min(px,h.x+h.w)),cy=Math.max(h.y,Math.min(PY,h.y+h.h));
+  if(inv<=0&&Math.hypot(px-cx,PY-cy)<R-1){hit();return}}
+ hz=hz.filter(h=>h.y<H+30);
+ if(inv<=0&&f>GRACE)for(const gh of ghosts)if(f<gh.length&&Math.abs(gh[f]-px)<2*R-3){hit();return}
+}
+function draw(){
+ const bg=col('--board'),fg=col('--fg'),haz=col('--haz'),me=col('--me'),gc=col('--gh'),ln=col('--line');
+ g.save();g.clearRect(0,0,W,H);g.fillStyle=bg;g.fillRect(0,0,W,H);
+ if(shake>0){g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.85}
+ g.strokeStyle=ln;g.lineWidth=1;g.beginPath();g.moveTo(0,PY+R+6);g.lineTo(W,PY+R+6);g.stroke();
+ g.fillStyle=haz;for(const h of hz){g.beginPath();g.roundRect(h.x,h.y,h.w,h.h,6);g.fill()}
+ for(const gh of ghosts){if(f<gh.length){const early=f<=GRACE;g.globalAlpha=early?.25:.7;g.fillStyle=gc;
+  g.beginPath();g.arc(gh[f],PY,R,0,7);g.fill();
+  g.globalAlpha=early?.25:.35;g.beginPath();g.arc(gh[f],PY,R+5,0,7);g.strokeStyle=gc;g.lineWidth=2;g.stroke();g.globalAlpha=1}}
+ if(state!=='menu'&&!(inv>0&&(f>>2)%2)){g.fillStyle=me;g.beginPath();g.arc(px,PY,R,0,7);g.fill()}
+ g.fillStyle=fg;g.textAlign='center';g.font='700 28px "Space Grotesk",system-ui,sans-serif';
+ g.globalAlpha=.9;g.fillText(fmt(f/60),W/2,48);
+ g.font='500 13px "Space Grotesk",system-ui,sans-serif';g.globalAlpha=.55;g.fillText(ghosts.length+' ghosts  |  best '+fmt(best),W/2,70);
+ for(let i=0;i<3;i++){g.globalAlpha=i<lives?1:.2;g.fillStyle=haz;g.beginPath();g.arc(W/2-20+i*20,92,6,0,7);g.fill()}
+ if(state!=='menu'){const rr=RANKS[rk(f/60)];g.font='700 13px "Space Grotesk",system-ui,sans-serif';const tw=g.measureText(rr[1]).width+24;
+  g.globalAlpha=1;g.fillStyle=rr[2];g.beginPath();g.roundRect(W/2-tw/2,106,tw,22,11);g.fill();
+  g.fillStyle='#111';g.textBaseline='middle';g.fillText(rr[1],W/2,117.5);g.textBaseline='alphabetic';
+  if(banner>0&&state==='play'){g.globalAlpha=Math.min(1,banner/40);g.fillStyle=rr[2];g.font='700 38px "Space Grotesk",system-ui,sans-serif';g.fillText('Rank up!',W/2,H/2-50);g.font='700 24px "Space Grotesk",system-ui,sans-serif';g.fillText(rr[1],W/2,H/2-18)}}
+ g.globalAlpha=1;g.restore();
+}
+let last=0,acc=0;
+function loop(ts){const d=Math.min(ts-last,100);last=ts;acc+=d;
+ while(acc>=1000/60){if(state==='play')step();acc-=1000/60}
+ draw();requestAnimationFrame(loop)}
+requestAnimationFrame(ts=>{last=ts;loop(ts)});
+function pos(e){const r=wrap.getBoundingClientRect();tx=(e.clientX-r.left)/r.width*W}
+wrap.addEventListener('pointerdown',e=>{if(state==='play')pos(e)});
+wrap.addEventListener('pointermove',e=>{if(state==='play')pos(e)});
+GO.addEventListener('click',start);
+const OWNER='ReliveGames',CONTACT='ReliveGames@gmail.com';
+document.querySelectorAll('.own').forEach(e=>e.textContent=OWNER);document.querySelectorAll('.ct').forEach(e=>e.textContent=CONTACT);
+const tm=document.getElementById('tm');
+document.getElementById('tmB').onclick=()=>tm.classList.remove('hide');
+document.getElementById('tmX').onclick=()=>tm.classList.add('hide');
+document.getElementById('tmB2').onclick=()=>tm.classList.remove('hide');
+let agreed=store.getSync('haunt-terms')==='1';
+const agBox=document.getElementById('agree'),ag=document.getElementById('ag');
+if(agreed)agBox.hidden=true;else{GO.disabled=!ag.checked;store.getAsync('haunt-terms').then(v=>{if(v==='1'&&!agreed){agreed=true;agBox.hidden=true;GO.disabled=false}})}
+ag.onchange=()=>{GO.disabled=!ag.checked};
+GO.addEventListener('click',()=>{if(!agreed&&ag.checked){agreed=true;agBox.hidden=true;store.set('haunt-terms','1');}});
+noB.addEventListener('click',()=>{cv.classList.add('hide');die()});
+// Placeholder rewarded ad: a 5 second countdown. In the native app, replace the body with the real ad SDK call and resolve true only when the reward is granted.
+const adv=document.getElementById('adv'),adT=document.getElementById('adT'),adBar=document.getElementById('adBar'),skipB=document.getElementById('skip');
+const AD_LEN=30,SKIP_AT=25;
+function rewardedAd(){return new Promise(res=>{
+ const t0=performance.now();adv.classList.remove('hide');skipB.disabled=true;skipB.textContent='Skip in '+SKIP_AT+'s';adBar.style.width='0';adT.textContent='Ad '+AD_LEN+'s';
+ const fin=()=>{clearInterval(iv);adv.classList.add('hide');res(true)};
+ skipB.onclick=fin;
+ const iv=setInterval(()=>{const s=(performance.now()-t0)/1000;
+  adT.textContent='Ad '+Math.max(0,Math.ceil(AD_LEN-s))+'s';adBar.style.width=Math.min(100,s/AD_LEN*100)+'%';
+  if(s>=SKIP_AT){skipB.disabled=false;skipB.textContent='Skip ad'}else skipB.textContent='Skip in '+Math.ceil(SKIP_AT-s)+'s';
+  if(s>=AD_LEN)fin()},200);
+})}
+adB.addEventListener('click',async()=>{
+ const ok=await rewardedAd();adB.disabled=false;noB.hidden=false;adB.textContent='Watch ad for +1 life';cv.classList.add('hide');
+ if(ok){used=true;lives=1;inv=150;hz=hz.filter(h=>h.y<PY-170||h.y>PY+30);tx=px;state='play'}else die()});
+CL.addEventListener('click',()=>{ghosts=[];CL.hidden=true;B.textContent='Best '+fmt(best);M.textContent='Ghosts cleared. Fresh haunt.'});
+if(best>0)B.textContent='Best '+fmt(best)+', '+RANKS[rk(best)][1];
+</script>
+</body></html>
