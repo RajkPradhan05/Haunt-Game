@@ -142,7 +142,7 @@
     const H = canvas.height;
 
     // Game state
-    let gameState = 'menu'; // menu, playing, gameOver
+    let gameState = 'menu';
     let score = 0;
     let lives = 3;
     let bestScore = parseInt(localStorage.getItem('haunt-best') || '0');
@@ -152,9 +152,7 @@
     const player = {
       x: W / 2,
       y: H - 80,
-      radius: 14,
-      vx: 0,
-      vy: 0
+      radius: 14
     };
 
     // Game objects
@@ -163,44 +161,44 @@
     let particles = [];
     let spawnTimer = 0;
 
-    // Input - ONLY respond to drag, not tap-to-position
-    let lastTouchX = null;
+    // Input - Track initial touch position and current position
+    let touchStartX = null;
+    let touchCurrentX = null;
     let isDragging = false;
 
     // Timing
     let gameTime = 0;
     let lastFrame = Date.now();
 
-    function getTouchPos(touch) {
+    function getScreenX(e) {
       const rect = gameContainer.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const relX = (x / rect.width) * W;
-      return Math.max(player.radius, Math.min(W - player.radius, relX));
+      const x = e.clientX - rect.left;
+      return (x / rect.width) * W;
     }
 
     gameContainer.addEventListener('pointerdown', (e) => {
       if (gameState === 'playing') {
         isDragging = true;
-        lastTouchX = getTouchPos(e);
+        touchStartX = getScreenX(e);
+        touchCurrentX = touchStartX;
       }
     }, { passive: true });
 
     gameContainer.addEventListener('pointermove', (e) => {
-      if (gameState === 'playing' && isDragging && lastTouchX !== null) {
-        const currentX = getTouchPos(e);
-        const deltaX = currentX - lastTouchX;
+      if (gameState === 'playing' && isDragging && touchStartX !== null) {
+        touchCurrentX = getScreenX(e);
+        const deltaX = touchCurrentX - touchStartX;
         
-        // Move player by the delta amount (how much finger moved)
-        player.x += deltaX;
-        player.x = Math.max(player.radius, Math.min(W - player.radius, player.x));
-        
-        lastTouchX = currentX;
+        // Move player by delta from start position
+        let newX = (W / 2) + deltaX;
+        player.x = Math.max(player.radius, Math.min(W - player.radius, newX));
       }
     }, { passive: true });
 
     gameContainer.addEventListener('pointerup', () => {
       isDragging = false;
-      lastTouchX = null;
+      touchStartX = null;
+      touchCurrentX = null;
     }, { passive: true });
 
     function spawnObstacle() {
@@ -219,8 +217,7 @@
         x: Math.random() * (W - 20) + 10,
         y: -20,
         r: 8,
-        vy: 2.5 + gameTime * 0.005,
-        wobble: Math.random() * Math.PI * 2
+        vy: 2.5 + gameTime * 0.005
       });
     }
 
@@ -284,7 +281,6 @@
       for (let i = collectibles.length - 1; i >= 0; i--) {
         const col = collectibles[i];
         col.y += col.vy;
-        col.wobble += 0.08;
 
         // Collision check
         const dist = Math.hypot(player.x - col.x, player.y - col.y);
@@ -305,7 +301,7 @@
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += 0.1; // gravity
+        p.vy += 0.1;
         p.life -= dt;
         if (p.life <= 0) {
           particles.splice(i, 1);
@@ -316,11 +312,9 @@
     }
 
     function draw() {
-      // Clear canvas
       ctx.fillStyle = '#0f1420';
       ctx.fillRect(0, 0, W, H);
 
-      // Draw background grid
       ctx.strokeStyle = 'rgba(95,166,255,0.08)';
       ctx.lineWidth = 1;
       for (let i = 0; i < W; i += 60) {
@@ -330,13 +324,11 @@
         ctx.stroke();
       }
 
-      // Draw obstacles (red)
       ctx.fillStyle = '#ff6b7a';
       for (const obs of obstacles) {
         ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
       }
 
-      // Draw collectibles (cyan glow)
       ctx.fillStyle = '#7ff5d2';
       ctx.shadowBlur = 16;
       ctx.shadowColor = '#7ff5d2';
@@ -347,7 +339,6 @@
       }
       ctx.shadowBlur = 0;
 
-      // Draw particles
       for (const p of particles) {
         ctx.globalAlpha = p.life / p.maxLife;
         ctx.fillStyle = p.color;
@@ -357,7 +348,6 @@
       }
       ctx.globalAlpha = 1;
 
-      // Draw player (blue glow)
       ctx.fillStyle = '#5fa6ff';
       ctx.shadowBlur = 20;
       ctx.shadowColor = '#5fa6ff';
@@ -366,7 +356,6 @@
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      // Draw player core
       ctx.fillStyle = '#0a0e1a';
       ctx.beginPath();
       ctx.arc(player.x, player.y, player.radius * 0.5, 0, Math.PI * 2);
@@ -375,7 +364,7 @@
 
     function gameLoop() {
       const now = Date.now();
-      const dt = Math.min((now - lastFrame) / 1000, 0.016); // Cap at 60fps
+      const dt = Math.min((now - lastFrame) / 1000, 0.016);
       lastFrame = now;
 
       update(dt);
@@ -395,7 +384,8 @@
       player.x = W / 2;
       player.y = H - 80;
       isDragging = false;
-      lastTouchX = null;
+      touchStartX = null;
+      touchCurrentX = null;
 
       overlay.classList.add('hidden');
       scoreText.textContent = '0';
@@ -405,7 +395,8 @@
     function endGame() {
       gameState = 'gameOver';
       isDragging = false;
-      lastTouchX = null;
+      touchStartX = null;
+      touchCurrentX = null;
       
       if (score > bestScore) {
         bestScore = score;
@@ -425,7 +416,6 @@
 
     startBtn.addEventListener('click', startGame);
 
-    // Start game loop
     lastFrame = Date.now();
     gameLoop();
   </script>
