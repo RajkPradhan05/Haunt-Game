@@ -1,196 +1,341 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Haunt</title>
-<style>
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
---bg:#e9e6f2;--board:#f7f5fc;--fg:#1d1a2b;--haz:#e8465a;--me:#1f6bff;--gh:#7b4dff;--line:#d6d1e6;--btn:#1d1a2b;--btnfg:#f7f5fc}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07060d;--board:#0f0d1a;--fg:#ece9ff;--haz:#ff5468;--me:#5aa2ff;--gh:#a98bff;--line:#241f3b;--btn:#ece9ff;--btnfg:#0f0d1a}}
-:root[data-theme="dark"]{--bg:#07060d;--board:#0f0d1a;--fg:#ece9ff;--haz:#ff5468;--me:#5aa2ff;--gh:#a98bff;--line:#241f3b;--btn:#ece9ff;--btnfg:#0f0d1a}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-user-select:none;user-select:none;overflow:hidden}
-body{display:flex;align-items:center;justify-content:center}
-#wrap{position:relative;width:min(100%,calc(100vh * .5625));aspect-ratio:9/16;max-height:100%;background:var(--board);touch-action:none;overflow:hidden}
-canvas{width:100%;height:100%;display:block}
-#ov,#cv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;background:color-mix(in srgb,var(--board) 82%,transparent)}
-#ov.hide,#cv.hide{display:none}
-h2{font-size:36px;margin:0 0 10px;letter-spacing:-.03em;line-height:1.05}
-button:disabled{opacity:.6;cursor:default}
-#adv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;background:#0b0b10;color:#fff}
-#adv.hide{display:none}
-.foot{margin-top:22px;font-size:12px;opacity:.6;max-width:none}
-.lnk{background:none;color:inherit;font-size:12px;font-weight:400;padding:0;margin:0;text-decoration:underline;border-radius:0}
-#tm{position:absolute;inset:0;overflow:auto;padding:28px 24px;background:var(--board);text-align:left}
-#tm.hide{display:none}
-#tm h2{font-size:28px}
-#tm p{max-width:none;font-size:14px;line-height:1.55}
-.agree{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:6px;text-align:left}
-.agree[hidden]{display:none}
-.agree input{width:22px;height:22px;accent-color:var(--me);margin:0}
-.agree .lnk{font-size:inherit}
-#adT{position:absolute;top:16px;left:18px;font-size:14px;opacity:.8}
-#adBarW{width:80%;height:6px;background:#2b2b36;border-radius:3px;overflow:hidden;margin-top:26px}
-#adBar{height:100%;width:0;background:#ffd43b}
-#skip{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));margin:0;padding:11px 18px;font-size:15px;background:#fff;color:#111}
-h1{font-size:clamp(44px,15vw,72px);margin:0 0 8px;letter-spacing:-.04em;line-height:1}
-p{margin:0 0 10px;max-width:26ch;line-height:1.4;font-size:17px}
-.big{font-size:40px;font-weight:700;margin:0}
-button{margin-top:18px;font:inherit;font-weight:700;font-size:19px;padding:15px 34px;border:0;border-radius:14px;background:var(--btn);color:var(--btnfg);cursor:pointer}
-button:focus-visible{outline:3px solid var(--me);outline-offset:3px}
-.sm{font-size:14px;opacity:.7}
-#clr,#no{background:none;color:var(--fg);font-size:14px;font-weight:500;opacity:.6;margin-top:6px;padding:8px}
-</style></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Haunt</title>
+  <meta name="theme-color" content="#0d1020" />
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root{
+      --bg:#0d1020; --board:#121828; --fg:#eef4ff; --haz:#ff566f; --me:#5fa6ff; --gh:#8f70ff; --line:#2a2d45; --btn:#eef4ff; --btnfg:#111827;
+      --panel: rgba(15,18,27,.8); --panel2: rgba(19,23,35,.9);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:radial-gradient(circle at top,#1d2b4f 0%,#0d1020 30%,#090c15 100%);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+    body{display:grid;place-items:center;padding:12px}
+    #wrap{position:relative;width:min(92vw,420px);height:min(94vh,740px);max-height:100%;background:var(--board);border-radius:26px;box-shadow:0 18px 50px rgba(0,0,0,.35);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+    canvas{width:100%;height:100%;display:block;background:linear-gradient(180deg,#101725,#090d17)}
+    #ui{position:absolute;inset:0;pointer-events:none}
+    #bar{position:absolute;left:14px;right:14px;top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;pointer-events:none}
+    .chip{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#dfe7ff}
+    .chip strong{font-size:13px;letter-spacing:.05em}
+    #pulseBtn{position:absolute;right:18px;bottom:18px;border:none;border-radius:16px;padding:14px 18px;background:linear-gradient(135deg,#7ff5d2,#9bc6ff);color:#071018;font-weight:900;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 15px 30px rgba(127,245,210,.28);pointer-events:auto;opacity:.35;transform:translateY(6px);transition:opacity .2s,transform .2s}
+    #pulseBtn.ready{opacity:1;transform:translateY(0)}
+    #pulseBtn:active{transform:scale(.97)}
+    #overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(4,7,14,.46);backdrop-filter:blur(4px)}
+    #overlay.hidden{display:none}
+    .panel{width:min(82%,320px);background:var(--panel2);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:22px 18px;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,.25)}
+    h1{margin:0 0 8px;font-size:clamp(34px,8vw,52px);letter-spacing:-.06em}
+    p{margin:0;color:#bfd0ef;line-height:1.45;font-size:14px}
+    .cta{margin-top:18px;border:0;border-radius:14px;padding:14px 20px;background:linear-gradient(135deg,#89a9ff,#7ff5d2);font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#06131c;box-shadow:0 18px 30px rgba(127,245,210,.25)}
+    .tiny{margin-top:12px;font-size:12px;opacity:.76}
+  </style>
+</head>
 <body>
-<div id="wrap">
-<canvas id="c"></canvas>
-<div id="ov">
-<h1 id="t">Haunt</h1>
-<p id="m">Drag to dodge the blocks. You have 3 lives. Survive 10 minutes to become a Conqueror. Every run leaves a ghost of your path, and ghosts are solid.</p>
-<p class="sm" id="b"></p>
-<label class="agree" id="agree"><input type="checkbox" id="ag"><span>I agree to the <button class="lnk" id="tmB2" type="button">Terms</button></span></label>
-<button id="go">Play</button>
-<button id="clr" hidden>Clear ghosts</button>
-<p class="foot">&copy; 2026 <span class="own"></span>. All rights reserved. <button id="tmB" class="lnk">Terms</button></p>
-</div>
-<div id="cv" class="hide">
-<h2>Out of lives</h2>
-<p>Watch a short ad to get 1 more life and keep this run going. One continue per run. You can skip the ad after 25 seconds.</p>
-<button id="ad">Watch ad for +1 life</button>
-<button id="no">No thanks</button>
-</div>
-<div id="adv" class="hide">
-<span id="adT">Ad 30s</span>
-<h2>Your ad plays here</h2>
-<p class="sm">Placeholder ad. A real ad network replaces this screen in the app.</p>
-<div id="adBarW"><div id="adBar"></div></div>
-<button id="skip" disabled>Skip in 25s</button>
-</div>
-<div id="tm" class="hide">
-<h2>Terms of use</h2>
-<p>Haunt is &copy; 2026 <span class="own"></span>. All rights reserved. The game's code, design, name, artwork and sounds belong to its owner.</p>
-<p>You may play Haunt for your own personal use. You may not copy, modify, resell or redistribute the game, reverse engineer or extract its code, or use its name or branding without written permission.</p>
-<p>Data: this version saves only your best time on your own device. It does not collect personal information.</p>
-<p>The game is provided as is, without warranties. To the extent the law allows, the owner is not liable for losses from using it.</p>
-<p>Contact: <span class="ct"></span></p>
-<button id="tmX">Close</button>
-</div>
-</div>
-<script>
-const cv=document.getElementById('cv'),adB=document.getElementById('ad'),noB=document.getElementById('no');
-const C=document.getElementById('c'),g=C.getContext('2d'),wrap=document.getElementById('wrap');
-const W=360,H=640,PY=565,R=11,MAXG=8,GRACE=50;
-if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath()};
-const dpr=Math.min(window.devicePixelRatio||1,2);C.width=W*dpr;C.height=H*dpr;g.scale(dpr,dpr);
-const ov=document.getElementById('ov'),T=document.getElementById('t'),M=document.getElementById('m'),B=document.getElementById('b'),GO=document.getElementById('go'),CL=document.getElementById('clr');
-const mem={};
-const store={
- set(k,v){mem[k]=v;try{localStorage.setItem(k,v)}catch(e){}try{document.cookie=k+'='+encodeURIComponent(v)+';max-age=31536000;path=/;SameSite=Lax'}catch(e){}
-  try{const r=indexedDB.open('haunt',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{try{r.result.transaction('kv','readwrite').objectStore('kv').put(v,k)}catch(e){}}}catch(e){}},
- getSync(k){if(mem[k]!=null)return mem[k];try{const v=localStorage.getItem(k);if(v!=null)return v}catch(e){}
-  try{const m=document.cookie.match(new RegExp('(?:^|; )'+k+'=([^;]*)'));if(m)return decodeURIComponent(m[1])}catch(e){}return null},
- getAsync(k){return new Promise(res=>{try{const r=indexedDB.open('haunt',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{try{const q=r.result.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result==null?null:q.result);q.onerror=()=>res(null)}catch(e){res(null)}};r.onerror=()=>res(null)}catch(e){res(null)}})}
-};
-let best=parseFloat(store.getSync('haunt-best'))||0;
-store.getAsync('haunt-best').then(v=>{v=parseFloat(v);if(v>best){best=v;if(state==='menu')B.textContent='Best '+fmt(best)+', '+RANKS[rk(best)][1]}});
-let ghosts=[],hz=[],rec=[],f=0,px=W/2,tx=W/2,spawnT=0,rng,state='menu',shake=0,lives=3,inv=0,lastRank=0,banner=0,used=false;
-const col=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-function mul(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-const RANKS=[[0,'Rookie','#8d8aa3'],[60,'Wisp','#3fcfa5'],[120,'Dodger','#4a90ff'],[180,'Phantom','#a47bff'],[300,'Ace','#ff9f1a'],[420,'Master','#ff5d9a'],[600,'Conqueror','#ffd43b']];
-const rk=s=>{let r=0;RANKS.forEach((x,i)=>{if(s>=x[0])r=i});return r};
-const fmt=s=>s>=60?Math.floor(s/60)+'m '+String(Math.floor(s%60)).padStart(2,'0')+'s':s.toFixed(1)+'s';
-function start(){f=0;lives=3;inv=0;lastRank=0;banner=0;used=false;px=tx=W/2;hz=[];rec=[];rng=mul((Math.random()*1e9)|0);spawnT=20;state='play';ov.classList.add('hide')}
-function die(){
- ghosts.push(rec);if(ghosts.length>MAXG)ghosts.shift();
- const s=f/60;let nb=s>best;if(nb){best=s;store.set('haunt-best',String(s));}
- state='over';shake=12;try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}
- T.className='big';T.textContent=fmt(s);
- M.textContent='Rank: '+RANKS[rk(s)][1]+'. '+ghosts.length+(ghosts.length==1?' ghost now replays':' ghosts now replay')+' your moves.';
- B.textContent=(nb?'New best! ':'Best '+fmt(best)+', ')+RANKS[rk(best)][1];
- GO.textContent='Haunt again';CL.hidden=false;
- setTimeout(()=>ov.classList.remove('hide'),450);
-}
-function hit(){
- lives--;if(lives<=0){if(used){die()}else{state='cont';shake=10;cv.classList.remove('hide')}return}
- inv=100;shake=10;try{navigator.vibrate&&navigator.vibrate(40)}catch(e){}
- hz=hz.filter(h=>h.y<PY-170||h.y>PY+30);
-}
-function step(){
- f++;if(inv>0)inv--;if(banner>0)banner--;{const r=rk(f/60);if(r>lastRank){lastRank=r;banner=160;try{navigator.vibrate&&navigator.vibrate([30,40,30])}catch(e){}}}const t=f/60,sp=Math.min(3.2+t*.12,8.5),iv=Math.max(13,34-t*.5);
- px+=(tx-px)*.35;px=Math.max(R,Math.min(W-R,px));rec.push(px);
- if(--spawnT<=0){
-  const k=t<4?0:rng();
-  if(k<.4){let w=44+rng()*70;hz.push({x:rng()*(W-w),w,y:-20,h:18});
-   if(rng()<Math.min(.55,t/60)){w=40+rng()*60;hz.push({x:rng()*(W-w),w,y:-20,h:18})}
-   spawnT=iv*(.7+rng()*.6)}
-  else if(k<.65){const gw=Math.max(70,115-t),gx=rng()*(W-gw);
-   hz.push({x:0,w:gx,y:-20,h:18},{x:gx+gw,w:W-gx-gw,y:-20,h:18});spawnT=iv*1.3}
-  else if(k<.85){const d=rng()<.5?1:-1,s=d>0?10:W-70;
-   for(let i=0;i<5;i++)hz.push({x:s+d*i*55,w:60,y:-20-i*38,h:18});spawnT=iv*1.8}
-  else{for(let i=0;i<3;i++){const w=30+rng()*30;hz.push({x:rng()*(W-w),w,y:-20-i*45,h:18})}spawnT=iv*1.2}
- }
- for(const h of hz){h.y+=sp;
-  const cx=Math.max(h.x,Math.min(px,h.x+h.w)),cy=Math.max(h.y,Math.min(PY,h.y+h.h));
-  if(inv<=0&&Math.hypot(px-cx,PY-cy)<R-1){hit();return}}
- hz=hz.filter(h=>h.y<H+30);
- if(inv<=0&&f>GRACE)for(const gh of ghosts)if(f<gh.length&&Math.abs(gh[f]-px)<2*R-3){hit();return}
-}
-function draw(){
- const bg=col('--board'),fg=col('--fg'),haz=col('--haz'),me=col('--me'),gc=col('--gh'),ln=col('--line');
- g.save();g.clearRect(0,0,W,H);g.fillStyle=bg;g.fillRect(0,0,W,H);
- if(shake>0){g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.85}
- g.strokeStyle=ln;g.lineWidth=1;g.beginPath();g.moveTo(0,PY+R+6);g.lineTo(W,PY+R+6);g.stroke();
- g.fillStyle=haz;for(const h of hz){g.beginPath();g.roundRect(h.x,h.y,h.w,h.h,6);g.fill()}
- for(const gh of ghosts){if(f<gh.length){const early=f<=GRACE;g.globalAlpha=early?.25:.7;g.fillStyle=gc;
-  g.beginPath();g.arc(gh[f],PY,R,0,7);g.fill();
-  g.globalAlpha=early?.25:.35;g.beginPath();g.arc(gh[f],PY,R+5,0,7);g.strokeStyle=gc;g.lineWidth=2;g.stroke();g.globalAlpha=1}}
- if(state!=='menu'&&!(inv>0&&(f>>2)%2)){g.fillStyle=me;g.beginPath();g.arc(px,PY,R,0,7);g.fill()}
- g.fillStyle=fg;g.textAlign='center';g.font='700 28px "Space Grotesk",system-ui,sans-serif';
- g.globalAlpha=.9;g.fillText(fmt(f/60),W/2,48);
- g.font='500 13px "Space Grotesk",system-ui,sans-serif';g.globalAlpha=.55;g.fillText(ghosts.length+' ghosts  |  best '+fmt(best),W/2,70);
- for(let i=0;i<3;i++){g.globalAlpha=i<lives?1:.2;g.fillStyle=haz;g.beginPath();g.arc(W/2-20+i*20,92,6,0,7);g.fill()}
- if(state!=='menu'){const rr=RANKS[rk(f/60)];g.font='700 13px "Space Grotesk",system-ui,sans-serif';const tw=g.measureText(rr[1]).width+24;
-  g.globalAlpha=1;g.fillStyle=rr[2];g.beginPath();g.roundRect(W/2-tw/2,106,tw,22,11);g.fill();
-  g.fillStyle='#111';g.textBaseline='middle';g.fillText(rr[1],W/2,117.5);g.textBaseline='alphabetic';
-  if(banner>0&&state==='play'){g.globalAlpha=Math.min(1,banner/40);g.fillStyle=rr[2];g.font='700 38px "Space Grotesk",system-ui,sans-serif';g.fillText('Rank up!',W/2,H/2-50);g.font='700 24px "Space Grotesk",system-ui,sans-serif';g.fillText(rr[1],W/2,H/2-18)}}
- g.globalAlpha=1;g.restore();
-}
-let last=0,acc=0;
-function loop(ts){const d=Math.min(ts-last,100);last=ts;acc+=d;
- while(acc>=1000/60){if(state==='play')step();acc-=1000/60}
- draw();requestAnimationFrame(loop)}
-requestAnimationFrame(ts=>{last=ts;loop(ts)});
-function pos(e){const r=wrap.getBoundingClientRect();tx=(e.clientX-r.left)/r.width*W}
-wrap.addEventListener('pointerdown',e=>{if(state==='play')pos(e)});
-wrap.addEventListener('pointermove',e=>{if(state==='play')pos(e)});
-GO.addEventListener('click',start);
-const OWNER='ReliveGames',CONTACT='ReliveGames@gmail.com';
-document.querySelectorAll('.own').forEach(e=>e.textContent=OWNER);document.querySelectorAll('.ct').forEach(e=>e.textContent=CONTACT);
-const tm=document.getElementById('tm');
-document.getElementById('tmB').onclick=()=>tm.classList.remove('hide');
-document.getElementById('tmX').onclick=()=>tm.classList.add('hide');
-document.getElementById('tmB2').onclick=()=>tm.classList.remove('hide');
-let agreed=store.getSync('haunt-terms')==='1';
-const agBox=document.getElementById('agree'),ag=document.getElementById('ag');
-if(agreed)agBox.hidden=true;else{GO.disabled=!ag.checked;store.getAsync('haunt-terms').then(v=>{if(v==='1'&&!agreed){agreed=true;agBox.hidden=true;GO.disabled=false}})}
-ag.onchange=()=>{GO.disabled=!ag.checked};
-GO.addEventListener('click',()=>{if(!agreed&&ag.checked){agreed=true;agBox.hidden=true;store.set('haunt-terms','1');}});
-noB.addEventListener('click',()=>{cv.classList.add('hide');die()});
-// Placeholder rewarded ad: a 5 second countdown. In the native app, replace the body with the real ad SDK call and resolve true only when the reward is granted.
-const adv=document.getElementById('adv'),adT=document.getElementById('adT'),adBar=document.getElementById('adBar'),skipB=document.getElementById('skip');
-const AD_LEN=30,SKIP_AT=25;
-function rewardedAd(){return new Promise(res=>{
- const t0=performance.now();adv.classList.remove('hide');skipB.disabled=true;skipB.textContent='Skip in '+SKIP_AT+'s';adBar.style.width='0';adT.textContent='Ad '+AD_LEN+'s';
- const fin=()=>{clearInterval(iv);adv.classList.add('hide');res(true)};
- skipB.onclick=fin;
- const iv=setInterval(()=>{const s=(performance.now()-t0)/1000;
-  adT.textContent='Ad '+Math.max(0,Math.ceil(AD_LEN-s))+'s';adBar.style.width=Math.min(100,s/AD_LEN*100)+'%';
-  if(s>=SKIP_AT){skipB.disabled=false;skipB.textContent='Skip ad'}else skipB.textContent='Skip in '+Math.ceil(SKIP_AT-s)+'s';
-  if(s>=AD_LEN)fin()},200);
-})}
-adB.addEventListener('click',async()=>{
- const ok=await rewardedAd();adB.disabled=false;noB.hidden=false;adB.textContent='Watch ad for +1 life';cv.classList.add('hide');
- if(ok){used=true;lives=1;inv=150;hz=hz.filter(h=>h.y<PY-170||h.y>PY+30);tx=px;state='play'}else die()});
-CL.addEventListener('click',()=>{ghosts=[];CL.hidden=true;B.textContent='Best '+fmt(best);M.textContent='Ghosts cleared. Fresh haunt.'});
-if(best>0)B.textContent='Best '+fmt(best)+', '+RANKS[rk(best)][1];
-</script>
-</body></html>
+  <div id="wrap">
+    <canvas id="c" width="420" height="740"></canvas>
+    <div id="ui">
+      <div id="bar">
+        <div class="chip">Score <strong id="score">0</strong></div>
+        <div class="chip">Best <strong id="best">0</strong></div>
+        <div class="chip">Lives <strong id="lives">3</strong></div>
+      </div>
+      <button id="pulseBtn">Pulse</button>
+    </div>
+    <div id="overlay">
+      <div class="panel">
+        <h1>Haunt</h1>
+        <p>Collect glowing seeds. Dodge the black shards. Survive long enough to become the ghost that never stops.</p>
+        <button class="cta" id="startBtn">Start</button>
+        <div class="tiny">Tip: fill your pulse meter to burst nearby danger.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const bestEl = document.getElementById('best');
+    const livesEl = document.getElementById('lives');
+    const startBtn = document.getElementById('startBtn');
+    const pulseBtn = document.getElementById('pulseBtn');
+    const overlay = document.getElementById('overlay');
+
+    const W = canvas.width, H = canvas.height;
+    const bestKey = 'haunt-best-score';
+    let bestScore = Number(localStorage.getItem(bestKey) || 0);
+    bestEl.textContent = bestScore;
+
+    let state = 'menu';
+    let last = 0;
+    let targetX = W / 2;
+    let score = 0;
+    let pulse = 0;
+    let combo = 0;
+    let comboTimer = 0;
+    let nextSpawn = 0.8;
+    let shake = 0;
+
+    const player = {
+      x: W / 2,
+      y: H - 70,
+      r: 16,
+      lives: 3,
+      trail: [],
+      flash: 0
+    };
+
+    let petals = [];
+    let shards = [];
+    let particles = [];
+
+    function resetGame(){
+      player.x = W / 2; player.y = H - 70; player.lives = 3; player.trail=[]; player.flash=0;
+      petals=[]; shards=[]; particles=[]; score=0; pulse=0; combo=0; comboTimer=0; nextSpawn=0.8; shake=0;
+      scoreEl.textContent = '0'; livesEl.textContent = '3'; pulseBtn.classList.remove('ready'); pulseBtn.disabled = true; pulseBtn.style.pointerEvents='none';
+    }
+
+    function startGame(){
+      resetGame();
+      state = 'playing';
+      overlay.classList.add('hidden');
+    }
+
+    function endGame(){
+      state = 'gameover';
+      bestScore = Math.max(bestScore, Math.floor(score));
+      localStorage.setItem(bestKey, String(bestScore));
+      bestEl.textContent = bestScore;
+      overlay.classList.remove('hidden');
+      overlay.innerHTML = `
+        <div class="panel">
+          <h1>Run Ended</h1>
+          <p>Score: <strong>${Math.floor(score)}</strong><br>Best: <strong>${bestScore}</strong></p>
+          <button class="cta" id="restartBtn">Play Again</button>
+          <div class="tiny">The darkness always returns.</div>
+        </div>
+      `;
+      document.getElementById('restartBtn').addEventListener('click', ()=>{
+        overlay.classList.add('hidden');
+        startGame();
+      });
+    }
+
+    function spawnPetal(){
+      petals.push({
+        x: 28 + Math.random() * (W - 56),
+        y: -20,
+        r: 8 + Math.random() * 8,
+        vy: 120 + Math.random() * 100 + score * 0.04,
+        hue: 35 + Math.random() * 70
+      });
+    }
+
+    function spawnShard(){
+      const s = 14 + Math.random() * 24;
+      shards.push({
+        x: 20 + Math.random() * (W - 40),
+        y: -25,
+        r: s,
+        vx: (Math.random()-0.5) * 80,
+        vy: 150 + Math.random() * 130,
+        spin: (Math.random()-0.5) * 2.7,
+        rot: Math.random() * Math.PI * 2
+      });
+    }
+
+    function burst(x,y,color,count){
+      for(let i=0;i<count;i++){
+        particles.push({
+          x,y,
+          vx:(Math.random()-0.5)*220,
+          vy:(Math.random()-0.5)*220,
+          r:2+Math.random()*3,
+          life:0.8+Math.random()*0.8,
+          maxLife:0.8+Math.random()*0.8,
+          c:color
+        });
+      }
+    }
+
+    function triggerPulse(){
+      if(state !== 'playing' || !pulseBtn.classList.contains('ready')) return;
+      pulse = 0;
+      pulseBtn.classList.remove('ready');
+      pulseBtn.disabled = true;
+      pulseBtn.style.pointerEvents = 'none';
+      burst(player.x, player.y, '#7ff5d2', 28);
+
+      for(let i = shards.length-1; i>=0; i--){
+        const s = shards[i];
+        const dx = s.x - player.x; const dy = s.y - player.y; const d = Math.hypot(dx,dy) || 1;
+        if(d < 110 + s.r){
+          shards.splice(i,1);
+          burst(s.x,s.y,'#ff566f',16);
+          score += 25;
+        }
+      }
+      scoreEl.textContent = Math.floor(score);
+    }
+
+    function hitPlayer(){
+      if(player.flash > 0) return;
+      player.flash = 1; player.lives -= 1; livesEl.textContent = player.lives; shake = 16; burst(player.x,player.y,'#ff566f',22);
+      if(player.lives <= 0){ endGame(); }
+    }
+
+    function update(dt){
+      if(state !== 'playing') return;
+
+      player.x += (targetX - player.x) * 0.2;
+      player.x = Math.max(player.r, Math.min(W - player.r, player.x));
+
+      score += dt * 2.4;
+      scoreEl.textContent = Math.floor(score);
+
+      if(comboTimer > 0){ comboTimer -= dt; }
+      if(comboTimer <= 0 && combo > 0) combo = 0;
+
+      pulse += dt * 12;
+      if(pulse >= 100){
+        pulse = 100;
+        pulseBtn.classList.add('ready');
+        pulseBtn.disabled = false; pulseBtn.style.pointerEvents='auto';
+      }
+
+      nextSpawn -= dt;
+      if(nextSpawn <= 0){
+        nextSpawn = Math.max(0.45, 1.2 - score * 0.003);
+        spawnPetal();
+        if(Math.random() > 0.45) spawnShard();
+      }
+
+      for(let i=petals.length-1;i>=0;i--){
+        const p = petals[i]; p.y += p.vy * dt; p.x += Math.sin((p.y + score)*0.05) * 18 * dt;
+        if(Math.hypot(player.x-p.x, player.y-p.y) < player.r + p.r + 2){
+          petals.splice(i,1);
+          combo += 1; comboTimer = 2.4; score += 35 + combo * 10; pulse += 16;
+          burst(p.x,p.y,'#7ff5d2',16);
+        } else if(p.y > H + 30){
+          petals.splice(i,1);
+        }
+      }
+
+      for(let i=shards.length-1;i>=0;i--){
+        const s = shards[i];
+        s.x += s.vx * dt; s.y += s.vy * dt; s.rot += s.spin * dt * 60;
+        if(s.x < -30 || s.x > W + 30 || s.y > H + 40){ shards.splice(i,1); continue; }
+        if(Math.hypot(player.x-s.x, player.y-s.y) < player.r + s.r){
+          shards.splice(i,1); hitPlayer();
+        }
+      }
+
+      player.trail.push({x:player.x,y:player.y,life:1});
+      if(player.trail.length > 12) player.trail.shift();
+      for(let i=0;i<player.trail.length;i++){ player.trail[i].life -= dt * 1.3; if(player.trail[i].life <=0) player.trail.splice(i,1); }
+
+      for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; if(p.life <=0) particles.splice(i,1); }
+      if(player.flash > 0) player.flash = Math.max(0, player.flash - dt * 2.4);
+      if(shake > 0) shake *= 0.8;
+    }
+
+    function drawBg(){
+      ctx.clearRect(0,0,W,H);
+      const g = ctx.createRadialGradient(W/2, H*0.22, 20, W/2, H/2, H*0.8);
+      g.addColorStop(0,'#1d2c53'); g.addColorStop(.36,'#111a2d'); g.addColorStop(1,'#070b14');
+      ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+      ctx.save();
+      ctx.translate(W/2,H/2); ctx.rotate((score*0.015) % (Math.PI*2)); ctx.translate(-W/2,-H/2);
+      ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=1;
+      for(let i=0;i<7;i++){ ctx.beginPath(); ctx.arc(W/2, H/2, 40 + i*34, 0, Math.PI*2); ctx.stroke(); }
+      ctx.restore();
+      if(shake>0){ ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake); }
+    }
+
+    function drawPetals(){
+      for(const p of petals){
+        ctx.save();
+        ctx.fillStyle = `hsla(${p.hue},90%,68%,.95)`;
+        ctx.shadowBlur = 18; ctx.shadowColor = `hsla(${p.hue},90%,70%,.9)`;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(p.x,p.y-p.r*1.2); ctx.lineTo(p.x+p.r*0.5,p.y); ctx.lineTo(p.x,p.y+p.r*1.2); ctx.lineTo(p.x-p.r*0.5,p.y); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawShards(){
+      for(const s of shards){
+        ctx.save();
+        ctx.translate(s.x,s.y); ctx.rotate(s.rot);
+        ctx.fillStyle='#0a0d12'; ctx.shadowBlur=20; ctx.shadowColor='rgba(255,86,111,.45)';
+        ctx.beginPath(); ctx.moveTo(0,-s.r); ctx.lineTo(s.r*.72,0); ctx.lineTo(0,s.r); ctx.lineTo(-s.r*.72,0); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawParticles(){
+      for(const p of particles){
+        ctx.globalAlpha = Math.max(0,p.life / p.maxLife);
+        ctx.fillStyle = p.c;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawPlayer(){
+      for(let i=0;i<player.trail.length;i++){
+        const t = player.trail[i];
+        ctx.fillStyle = `rgba(95,166,255,${t.life*0.32})`;
+        ctx.beginPath(); ctx.arc(t.x,t.y,player.r*(.25 + i/player.trail.length),0,Math.PI*2); ctx.fill();
+      }
+      ctx.save();
+      if(player.flash > 0){ ctx.shadowBlur = 24; ctx.shadowColor = 'rgba(255,86,111,.9)'; }
+      else { ctx.shadowBlur = 22; ctx.shadowColor = 'rgba(95,166,255,.9)'; }
+      ctx.fillStyle = player.flash > 0 ? '#ffd3dd' : '#5fa6ff';
+      ctx.beginPath(); ctx.arc(player.x,player.y,player.r,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#09111d'; ctx.beginPath(); ctx.arc(player.x,player.y,player.r*0.4,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+
+      const pulseGlow = ctx.createRadialGradient(player.x,player.y,0,player.x,player.y,80 + pulse*0.7);
+      pulseGlow.addColorStop(0,'rgba(95,166,255,.26)'); pulseGlow.addColorStop(1,'rgba(95,166,255,0)');
+      ctx.fillStyle = pulseGlow; ctx.beginPath(); ctx.arc(player.x,player.y,80 + pulse*0.7,0,Math.PI*2); ctx.fill();
+    }
+
+    function drawMeter(){
+      const x = W-120, y = H-26, w = 96, h = 10;
+      ctx.fillStyle='rgba(255,255,255,.08)'; ctx.fillRect(x,y,w,h);
+      ctx.fillStyle='#7ff5d2'; ctx.fillRect(x,y,(pulse/100)*w,h);
+      ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.strokeRect(x,y,w,h);
+    }
+
+    function render(){
+      drawBg(); drawPetals(); drawShards(); drawParticles(); drawPlayer(); drawMeter();
+    }
+
+    function frame(ts){
+      const dt = Math.min(.033,(ts-(last||ts))/1000); last = ts;
+      update(dt);
+      render();
+      requestAnimationFrame(frame);
+    }
+
+    canvas.addEventListener('pointerdown', e => {
+      const rect = canvas.getBoundingClientRect();
+      targetX = ((e.clientX - rect.left) / rect.width) * W;
+      if(state==='playing' && pulse>=100){ triggerPulse(); }
+    });
+
+    canvas.addEventListener('pointermove', e => {
+      if(state !== 'playing') return;
+      const rect = canvas.getBoundingClientRect();
+      targetX = ((e.clientX - rect.left) / rect.width) * W;
+    });
+
+    pulseBtn.addEventListener('click', triggerPulse);
+    startBtn.addEventListener('click', startGame);
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
