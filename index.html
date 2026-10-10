@@ -117,7 +117,7 @@
     <div id="overlay">
       <div id="overlay-content">
         <h1>Haunt</h1>
-        <p>Dodge the falling obstacles.<br>Collect glowing orbs.<br>Survive as long as you can.</p>
+        <p>Drag your finger to move the ball.<br>Collect glowing orbs.<br>Dodge red obstacles.</p>
         <button id="start-btn">Start Game</button>
       </div>
     </div>
@@ -153,8 +153,8 @@
       x: W / 2,
       y: H - 80,
       radius: 14,
-      targetX: W / 2,
-      vx: 0
+      vx: 0,
+      vy: 0
     };
 
     // Game objects
@@ -163,24 +163,15 @@
     let particles = [];
     let spawnTimer = 0;
 
-    // Input
-    let mouseX = W / 2;
-    let isTouching = false;
+    // Input - ONLY respond to drag, not tap-to-position
+    let lastTouchX = null;
+    let isDragging = false;
 
     // Timing
     let gameTime = 0;
     let lastFrame = Date.now();
 
-    function getMousePos(e) {
-      const rect = gameContainer.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const relX = (x / rect.width) * W;
-      return Math.max(player.radius, Math.min(W - player.radius, relX));
-    }
-
-    function getTouchPos(e) {
-      const touch = e.touches[0];
+    function getTouchPos(touch) {
       const rect = gameContainer.getBoundingClientRect();
       const x = touch.clientX - rect.left;
       const relX = (x / rect.width) * W;
@@ -189,19 +180,27 @@
 
     gameContainer.addEventListener('pointerdown', (e) => {
       if (gameState === 'playing') {
-        mouseX = getMousePos(e);
-        isTouching = true;
+        isDragging = true;
+        lastTouchX = getTouchPos(e);
       }
     }, { passive: true });
 
     gameContainer.addEventListener('pointermove', (e) => {
-      if (gameState === 'playing' && isTouching) {
-        mouseX = getMousePos(e);
+      if (gameState === 'playing' && isDragging && lastTouchX !== null) {
+        const currentX = getTouchPos(e);
+        const deltaX = currentX - lastTouchX;
+        
+        // Move player by the delta amount (how much finger moved)
+        player.x += deltaX;
+        player.x = Math.max(player.radius, Math.min(W - player.radius, player.x));
+        
+        lastTouchX = currentX;
       }
     }, { passive: true });
 
     gameContainer.addEventListener('pointerup', () => {
-      isTouching = false;
+      isDragging = false;
+      lastTouchX = null;
     }, { passive: true });
 
     function spawnObstacle() {
@@ -245,11 +244,6 @@
       if (gameState !== 'playing') return;
 
       gameTime += dt;
-
-      // Player movement (smooth follow)
-      player.vx = (mouseX - player.x) * 0.15;
-      player.x += player.vx;
-      player.x = Math.max(player.radius, Math.min(W - player.radius, player.x));
 
       // Spawn obstacles
       spawnTimer += dt;
@@ -400,7 +394,8 @@
       spawnTimer = 0;
       player.x = W / 2;
       player.y = H - 80;
-      mouseX = W / 2;
+      isDragging = false;
+      lastTouchX = null;
 
       overlay.classList.add('hidden');
       scoreText.textContent = '0';
@@ -409,6 +404,9 @@
 
     function endGame() {
       gameState = 'gameOver';
+      isDragging = false;
+      lastTouchX = null;
+      
       if (score > bestScore) {
         bestScore = score;
         localStorage.setItem('haunt-best', String(bestScore));
